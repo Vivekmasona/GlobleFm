@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FM Listener</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 100px; }
+    audio { width: 90%; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>🎶 Live FM Listener</h2>
+  <p id="status">Connecting...</p>
+  <audio id="player" controls></audio>
+
+  <script>
+    const ws = new WebSocket(location.origin.replace(/^http/, "ws"));
+    const player = document.getElementById("player");
+    const status = document.getElementById("status");
+
+    let song = null;
+    let startTime = 0;
+    let playing = false;
+
+    ws.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      console.log(data);
+
+      if (data.type === "status" && data.song) {
+        song = data.song;
+        player.src = song;
+        if (data.playing) {
+          player.currentTime = data.time;
+          player.play();
+          status.textContent = "▶ Live: " + song;
+        }
+      }
+
+      if (data.type === "play") {
+        player.src = data.song;
+        player.currentTime = data.time;
+        player.play();
+        status.textContent = "▶ Playing: " + data.song;
+      }
+
+      if (data.type === "pause") {
+        player.pause();
+        status.textContent = "⏸ Paused";
+      }
+
+      if (data.type === "resume") {
+        player.play();
+        status.textContent = "▶ Resumed";
+      }
+
+      if (data.type === "seek") {
+        player.currentTime = data.time;
+      }
+    };
+  </script>
+</body>
+</html>
