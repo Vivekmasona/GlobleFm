@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head><title>Listener</title></head>
+<body>
+<h2>FM Radio Listener</h2>
+<audio id="player" controls autoplay></audio>
+<script>
+const WS_URL = `${location.protocol === "https:" ? "wss://" : "ws://"}${location.host}`;
+const socket = new WebSocket(WS_URL);
+let pc;
+
+socket.onopen = () => {
+  socket.send(JSON.stringify({ type:"register", role:"listener" }));
+};
+
+socket.onmessage = async (e) => {
+  const msg = JSON.parse(e.data);
+  if (msg.type === "offer") {
+    pc = new RTCPeerConnection({ iceServers:[{ urls:"stun:stun.l.google.com:19302" }] });
+    pc.ontrack = (ev) => {
+      document.getElementById("player").srcObject = ev.streams[0];
+    };
+    pc.onicecandidate = (ev) => {
+      if (ev.candidate) socket.send(JSON.stringify({ type:"candidate", target:msg.from, payload:ev.candidate }));
+    };
+    await pc.setRemoteDescription(msg.payload);
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    socket.send(JSON.stringify({ type:"answer", target:msg.from, payload:answer }));
+  } else if (msg.type === "candidate" && pc) {
+    await pc.addIceCandidate(msg.payload);
+  }
+};
+</script>
+</body>
+</html>
