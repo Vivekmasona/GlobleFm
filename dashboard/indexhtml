@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FM Control</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 100px; }
+    input, button { padding: 8px; margin: 5px; }
+  </style>
+</head>
+<body>
+  <h2>🎛 FM Control Room</h2>
+  <input type="text" id="songUrl" placeholder="Song URL (mp3 link)" size="40">
+  <br>
+  <button onclick="play()">▶ Play</button>
+  <button onclick="pause()">⏸ Pause</button>
+  <button onclick="resume()">🔁 Resume</button>
+
+  <script>
+    const ws = new WebSocket(location.origin.replace(/^http/, "ws"));
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: "broadcaster" }));
+    };
+
+    function play() {
+      const song = document.getElementById("songUrl").value.trim();
+      if (!song) return alert("Enter song URL!");
+      ws.send(JSON.stringify({ type: "play", song }));
+    }
+
+    function pause() {
+      ws.send(JSON.stringify({ type: "pause" }));
+    }
+
+    function resume() {
+      ws.send(JSON.stringify({ type: "resume" }));
+    }
+  </script>
+</body>
+</html>
