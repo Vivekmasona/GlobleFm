@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: fm-connector
+    env: node
+    plan: free
+    buildCommand: "npm install"
+    startCommand: "node api/server.js"
+    autoDeploy: true
